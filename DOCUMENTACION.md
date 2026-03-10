@@ -1,5 +1,16 @@
 # 📑 Documentación Técnica: Aplicación "Mis Contactos"
 
+---
+
+## 👤 Información del Autor
+- **Autor:** Jesus Alberto Moreno Cortes
+- **Grupo:** 8_01
+- **Carrera:** Ingeniería en Software
+- **Materia:** Programación Móvil
+- **Docente:** Miguel Angel Montoya Cerro
+
+---
+
 ## 🚀 Resumen del Proyecto
 Este proyecto consiste en el desarrollo de una **agenda de contactos profesional** diseñada para ofrecer una experiencia de usuario fluida y moderna. Se enfocó en crear una interfaz intuitiva donde gestionar personas sea rápido y agradable. La aplicación permite registrar contactos con validaciones de seguridad, organizarlos automáticamente por orden alfabético, marcarlos como favoritos y eliminarlos con animaciones de alto nivel. Técnicamente, es una app robusta que utiliza una base de datos interna para que la información nunca se pierda, incluso sin internet, y emplea las últimas tecnologías de Google para garantizar un rendimiento óptimo sin trabas ni lagueos.
 
