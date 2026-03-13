@@ -2,63 +2,67 @@ package com.cursokotlin.contactos_app.ui.screens
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
-import com.cursokotlin.contactos_app.model.Contact
+import com.cursokotlin.contactos_app.data.model.Contact
 import com.cursokotlin.contactos_app.ui.ContactViewModel
+import com.cursokotlin.contactos_app.ui.components.detail.ActionButton
+import com.cursokotlin.contactos_app.ui.components.detail.FavoriteButton
+import com.cursokotlin.contactos_app.ui.components.detail.InfoRow
+import com.cursokotlin.contactos_app.ui.components.detail.ProfessionalDeleteDialog
 import kotlinx.coroutines.delay
+
+
+ //En esta parte es donde esta es la Pantalla de Detalle.
+ //Su función es mostrar toda la información de un contacto específico: su foto grande,
+ //nombre completo y opciones para llamarlo, mandarle correo o marcarlo como favorito.
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ContactDetailScreen(
+fun PantallaDetalleContacto(
     viewModel: ContactViewModel,
-    contactId: Long,
-    onBack: () -> Unit,
-    onEdit: (Long) -> Unit
+    contactId: Long,              // El ID único del contacto que queremos ver
+    onBack: () -> Unit,           // Volver a la lista
+    onEdit: (Long) -> Unit        // Ir a la pantalla de edición
 ) {
+    // Buscamos el contacto en nuestra lista usando su ID
     val contactState by viewModel.allContacts.collectAsState()
     val contact = contactState.find { it.id == contactId }
     val context = LocalContext.current
     val primaryColor = Color(0xFF3F51B5)
-    
-    // Estados para controlar la animación de borrado
+
+    // Estados para controlar el diálogo de borrar y la animación de salida
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var isDeleting by remember { mutableStateOf(false) }
 
+    // Al entrar, le pedimos al ViewModel que nos traiga la info fresca de este contacto
     LaunchedEffect(contactId) {
         viewModel.fetchContactById(contactId)
     }
 
-    // Definimos las propiedades de la animación de salida
+    // Animaciones para cuando borramos al contacto (se hace pequeño y se desvanece)
     val animatedScale by animateFloatAsState(
         targetValue = if (isDeleting) 0.7f else 1f,
         animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
@@ -70,10 +74,10 @@ fun ContactDetailScreen(
         label = "alpha"
     )
 
-    // Lógica para ejecutar el borrado real después de que termine la animación
+    // Si confirmamos que queremos borrar, esperamos a que termine la animación y volvemos atrás
     LaunchedEffect(isDeleting) {
         if (isDeleting) {
-            delay(650) // Esperamos a que la animación visual termine
+            delay(650)
             contact?.let { viewModel.delete(it) }
             onBack()
         }
@@ -81,11 +85,16 @@ fun ContactDetailScreen(
 
     Scaffold(
         topBar = {
+            // Barra superior azul con botón de volver, editar y borrar
             TopAppBar(
                 title = { Text("", color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar", tint = Color.White)
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Regresar",
+                            tint = Color.White
+                        )
                     }
                 },
                 actions = {
@@ -93,7 +102,11 @@ fun ContactDetailScreen(
                         Icon(Icons.Default.Edit, contentDescription = "Editar", tint = Color.White)
                     }
                     IconButton(onClick = { showDeleteConfirmation = true }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = Color.White)
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Eliminar",
+                            tint = Color.White
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = primaryColor)
@@ -102,19 +115,18 @@ fun ContactDetailScreen(
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize()) {
             contact?.let { c ->
-                // Aplicamos las animaciones de escala y transparencia a todo el contenido
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
                         .background(Color.White)
                         .graphicsLayer(
-                            scaleX = animatedScale,
+                            scaleX = animatedScale, // Aplicamos la animación de tamaño
                             scaleY = animatedScale,
-                            alpha = animatedAlpha
+                            alpha = animatedAlpha   // Aplicamos la transparencia al borrar
                         )
                 ) {
-                    // Header section
+                    // Cabecera azul con la foto del contacto
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -123,6 +135,7 @@ fun ContactDetailScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            // Círculo blanco que contiene la foto
                             Box(
                                 modifier = Modifier
                                     .size(150.dp)
@@ -136,13 +149,19 @@ fun ContactDetailScreen(
                                     AsyncImage(
                                         model = Uri.parse(c.photoUri),
                                         contentDescription = null,
-                                        modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(CircleShape),
                                         contentScale = ContentScale.Crop
                                     )
                                 } else {
+                                    // Si no hay foto, mostramos la inicial en grande
                                     val initials = c.name.firstOrNull()?.uppercase() ?: ""
                                     Box(
-                                        modifier = Modifier.fillMaxSize().clip(CircleShape).background(Color(0xFFE8EAF6)),
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(CircleShape)
+                                            .background(Color(0xFFE8EAF6)),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(initials, fontSize = 56.sp, fontWeight = FontWeight.Bold, color = primaryColor)
@@ -151,6 +170,7 @@ fun ContactDetailScreen(
                             }
                             
                             Spacer(modifier = Modifier.height(16.dp))
+                            // Nombre completo del contacto
                             Text(
                                 text = "${c.name} ${c.surname}",
                                 color = Color.White,
@@ -161,13 +181,13 @@ fun ContactDetailScreen(
                         }
                     }
 
-                    // Botones de acción
+                    // Fila de botones rápidos: Llamar, Mensaje y Favorito
                     Row(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .offset(y = (-35).dp)
+                            .offset(y = (-35).dp) // Hace que los botones floten sobre la división
                     ) {
                         ActionButton(icon = Icons.Default.Phone, label = "Llamar", primaryColor = primaryColor) {
                             val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${c.phone}"))
@@ -190,13 +210,17 @@ fun ContactDetailScreen(
                         )
                     }
 
-                    // Card de información
+                    // Tarjeta blanca con la información de contacto detallada
                     Card(
                         modifier = Modifier
                             .padding(horizontal = 24.dp)
                             .offset(y = (-15).dp)
                             .fillMaxWidth()
-                            .shadow(12.dp, RoundedCornerShape(24.dp), spotColor = Color.Black.copy(alpha = 0.1f)),
+                            .shadow(
+                                12.dp,
+                                RoundedCornerShape(24.dp),
+                                spotColor = Color.Black.copy(alpha = 0.1f)
+                            ),
                         shape = RoundedCornerShape(24.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White)
                     ) {
@@ -208,144 +232,18 @@ fun ContactDetailScreen(
                     }
                 }
 
-                // Diálogo de confirmación espectacular
+                // Si pulsamos el icono de basura, sale un aviso
                 if (showDeleteConfirmation) {
                     ProfessionalDeleteDialog(
                         contactName = c.name,
                         onConfirm = {
                             showDeleteConfirmation = false
-                            isDeleting = true // Disparamos la animación de salida
+                            isDeleting = true // Iniciamos la animación de despedida
                         },
                         onDismiss = { showDeleteConfirmation = false }
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun ProfessionalDeleteDialog(
-    contactName: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.6f))
-                .clickable { onDismiss() },
-            contentAlignment = Alignment.BottomCenter
-        ) {
-            var animateIn by remember { mutableStateOf(false) }
-            LaunchedEffect(Unit) { animateIn = true }
-
-            AnimatedVisibility(
-                visible = animateIn,
-                enter = slideInVertically(
-                    initialOffsetY = { it },
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)
-                ) + fadeIn(),
-                modifier = Modifier.clickable(enabled = false) { }
-            ) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(20.dp, RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)),
-                    shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(24.dp)
-                            .padding(bottom = 32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Box(modifier = Modifier.size(40.dp, 4.dp).clip(CircleShape).background(Color.LightGray))
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Text(text = "¿Estás seguro?", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E3A8A))
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "¿Deseas eliminar este contacto permanentemente? Esta acción no se puede deshacer.",
-                            fontSize = 15.sp,
-                            color = Color.Gray,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
-                        Spacer(modifier = Modifier.height(32.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(50.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF3F4F6)), shape = RoundedCornerShape(14.dp)) {
-                                Text("No, cancelar", color = Color(0xFF4B5563), fontWeight = FontWeight.SemiBold)
-                            }
-                            Button(onClick = onConfirm, modifier = Modifier.weight(1f).height(50.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3F51B5)), shape = RoundedCornerShape(14.dp)) {
-                                Text("Sí, eliminar", color = Color.White, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun FavoriteButton(isFavorite: Boolean, primaryColor: Color, onClick: () -> Unit) {
-    val scale by animateFloatAsState(
-        targetValue = if (isFavorite) 1.2f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "starScale"
-    )
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Surface(
-            onClick = onClick,
-            modifier = Modifier.size(54.dp).scale(scale).shadow(elevation = 10.dp, shape = CircleShape, spotColor = Color.Black.copy(alpha = 0.4f)),
-            shape = CircleShape,
-            color = if (isFavorite) Color(0xFFFFD700) else Color.White
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
-                    contentDescription = "Favorito",
-                    tint = if (isFavorite) Color.White else primaryColor,
-                    modifier = Modifier.size(26.dp)
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = "Favorito", color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-    }
-}
-
-@Composable
-fun ActionButton(icon: ImageVector, label: String, primaryColor: Color, onClick: () -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Surface(
-            onClick = onClick,
-            modifier = Modifier.size(54.dp).shadow(elevation = 10.dp, shape = CircleShape, spotColor = Color.Black.copy(alpha = 0.4f)),
-            shape = CircleShape,
-            color = Color.White
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(icon, contentDescription = label, tint = primaryColor, modifier = Modifier.size(26.dp))
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = label, color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-    }
-}
-
-@Composable
-fun InfoRow(icon: ImageVector, label: String, value: String, primaryColor: Color) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, tint = primaryColor, modifier = Modifier.size(24.dp))
-        Spacer(modifier = Modifier.width(18.dp))
-        Column {
-            Text(text = label, fontSize = 13.sp, color = Color.Gray)
-            Text(text = value, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = Color.Black)
         }
     }
 }

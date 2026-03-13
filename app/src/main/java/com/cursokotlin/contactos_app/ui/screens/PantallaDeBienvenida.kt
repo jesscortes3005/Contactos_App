@@ -21,68 +21,71 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
-@Composable
-fun SplashScreen(onAnimationFinished: () -> Unit) {
-    // Definimos los colores corporativos de nuestra aplicación para mantener la identidad visual
-    val primaryBrand = Color(0xFF1A56DB) // Azul principal
-    val secondaryBrand = Color(0xFF1E40AF) // Azul más oscuro para el degradado
 
-    // Estado local para controlar el inicio de las animaciones al entrar a la pantalla
+ //En esta seccion esta la Pantalla de bienvenida que vera el usuario al momento de abrirla lo cual
+ //su  funcion  es mostrar el logo con una animación bonita y luego llevarnos a la lista de los contactos que ya tengamos  //
+
+@Composable
+fun PantallaDeBienvenida(onAnimationFinished: () -> Unit) {
+    // Primero definimos los colores que usaremos que sera el azul
+    val primaryBrand = Color(0xFF1A56DB)
+    val secondaryBrand = Color(0xFF1E40AF)
+    
+    // Esta funcion de  interruptor nos dice cuándo deben empezar a moverse las cosas
     var startAnimation by remember { mutableStateOf(false) }
     
-    // Animación de Opacidad: Cambia de 0 (invisible) a 1 (visible) en 1 segundo
+    // Esta animación hace que el logo aparezca suavemente de invisible a visible
     val alphaAnim = animateFloatAsState(
         targetValue = if (startAnimation) 1f else 0f,
-        animationSpec = tween(durationMillis = 1000),
+        animationSpec = tween(durationMillis = 1000), // Tarda 1 segundo
         label = "alpha"
     )
-    
-    // Animación de Escala: Crea un efecto de crecimiento con un rebote elástico (Bouncy)
+
+    // Creamos la animación  para que el logo crezca un poquito con un efecto de rebote
     val scaleAnim = animateFloatAsState(
         targetValue = if (startAnimation) 1.2f else 0.8f,
         animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
+            dampingRatio = Spring.DampingRatioMediumBouncy, // Que rebote un poco
             stiffness = Spring.StiffnessLow
         ),
         label = "scale"
     )
 
-    // LaunchedEffect se dispara una sola vez al cargar el componente
+    // Este bloque lo que hara es que  se ejecutara una sola vez en cuanto entramos a la pantalla
     LaunchedEffect(key1 = true) {
-        startAnimation = true // Disparamos las animaciones de escala y opacidad
-        delay(2500) // Mantenemos la pantalla de portada por 2.5 segundos para una mejor experiencia
-        onAnimationFinished() // Ejecutamos la navegación hacia la pantalla principal (ContactList)
+        startAnimation = true // Se Encienden  las animaciones
+        delay(2500) // Esperamos 2 segundos y medio para que el usuario aprecie el logo
+        onAnimationFinished() // Le avisamos al usuario que terminamos para ir a la siguiente pantalla
     }
 
-    // Contenedor principal que ocupa toda la pantalla
+    // Este es el  contenedor principal que ocupa toda la pantalla con un fondo azul degradado
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                // Aplicamos un degradado vertical profesional usando nuestros colores de marca
                 Brush.verticalGradient(
                     colors = listOf(primaryBrand, secondaryBrand)
                 )
             ),
         contentAlignment = Alignment.Center
     ) {
-        // Columna que agrupa el logo y los textos informativos
+        // Ponemos el logo y los textos uno debajo del otro
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
             modifier = Modifier
-                .scale(scaleAnim.value) // Aplicamos la animación de escala aquí
-                .alpha(alphaAnim.value) // Aplicamos la animación de transparencia aquí
+                .scale(scaleAnim.value) // Le aplicamos el crecimiento
+                .alpha(alphaAnim.value) // Le aplicamos la transparencia
         ) {
-            // Contenedor circular decorativo para el icono principal
+            // El circulito blanco translúcido donde vive el icono
             Box(
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.2f)), // Blanco translúcido para resaltar el icono
+                    .background(Color.White.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
-                // Icono representativo de "Página de Contactos"
+                // El icono de la app
                 Icon(
                     imageVector = Icons.Rounded.ContactPage,
                     contentDescription = null,
@@ -93,7 +96,7 @@ fun SplashScreen(onAnimationFinished: () -> Unit) {
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            // Título principal de la aplicación con peso extra negrita para impacto visual
+            // Nombre de la app en letras grandes y gruesas
             Text(
                 text = "Mis Contactos",
                 color = Color.White,
@@ -102,7 +105,8 @@ fun SplashScreen(onAnimationFinished: () -> Unit) {
                 letterSpacing = 1.sp
             )
             
-            // Subtítulo o Slogan de la aplicación con opacidad reducida para jerarquía visual
+            // Un pequeño eslogan debajo para que acompañe a la app
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Tu agenda profesional",
                 color = Color.White.copy(alpha = 0.7f),

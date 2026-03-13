@@ -11,27 +11,32 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.cursokotlin.contactos_app.data.AppDatabase
-import com.cursokotlin.contactos_app.data.ContactRepository
+import com.cursokotlin.contactos_app.data.local.AppDatabase
+import com.cursokotlin.contactos_app.data.repository.ContactRepository
 import com.cursokotlin.contactos_app.ui.ContactViewModel
 import com.cursokotlin.contactos_app.ui.ContactViewModelFactory
-import com.cursokotlin.contactos_app.ui.screens.ContactDetailScreen
-import com.cursokotlin.contactos_app.ui.screens.ContactFormScreen
-import com.cursokotlin.contactos_app.ui.screens.ContactListScreen
-import com.cursokotlin.contactos_app.ui.screens.FavoritesScreen
-import com.cursokotlin.contactos_app.ui.screens.SplashScreen
+import com.cursokotlin.contactos_app.ui.screens.PantallaDetalleContacto
+import com.cursokotlin.contactos_app.ui.screens.PantallaRegistroContacto
+import com.cursokotlin.contactos_app.ui.screens.PantallaDeContactos
+import com.cursokotlin.contactos_app.ui.screens.PantallaFavoritos
+import com.cursokotlin.contactos_app.ui.screens.PantallaDeBienvenida
 import com.cursokotlin.contactos_app.ui.theme.Contactos_appTheme
 
 class MainActivity : ComponentActivity() {
+    // El database es nuestro almacén de datos
     private val database by lazy { AppDatabase.getDatabase(this) }
+    
+    // El repository es el administrador que maneja los pedidos a la base de datos
     private val repository by lazy { ContactRepository(database.contactDao()) }
+    
+    // El viewModel es el cerebro que conecta la lógica con lo que ves en pantalla
     private val viewModel: ContactViewModel by viewModels {
         ContactViewModelFactory(repository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge() // Hace que la app use toda la pantalla hasta los bordes
         setContent {
             Contactos_appTheme {
                 ContactAppNavigation(viewModel)
@@ -40,21 +45,28 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
+ //Este es el Mapa de Navegación de la app.
+ //Aquí definimos a qué pantalla ir cuando el usuario hace clic en los  botones.
+
 @Composable
 fun ContactAppNavigation(viewModel: ContactViewModel) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "splash") {
+
+        //  Portada de inicio
         composable("splash") {
-            SplashScreen(onAnimationFinished = {
+            PantallaDeBienvenida(onAnimationFinished = {
                 navController.navigate("contact_list") {
                     popUpTo("splash") { inclusive = true }
                 }
             })
         }
         
+        // Lista principal de contactos
         composable("contact_list") {
-            ContactListScreen(
+            PantallaDeContactos(
                 viewModel = viewModel,
                 onContactClick = { id -> navController.navigate("contact_detail/$id") },
                 onAddContactClick = { navController.navigate("contact_form/-1") },
@@ -62,8 +74,9 @@ fun ContactAppNavigation(viewModel: ContactViewModel) {
             )
         }
 
+        // Sección de contactos favoritos
         composable("favorites") {
-            FavoritesScreen(
+            PantallaFavoritos(
                 viewModel = viewModel,
                 onContactClick = { id -> navController.navigate("contact_detail/$id") },
                 onBack = { navController.popBackStack() },
@@ -75,12 +88,13 @@ fun ContactAppNavigation(viewModel: ContactViewModel) {
             )
         }
 
+        // Ver los detalles de una persona específica
         composable(
             route = "contact_detail/{contactId}",
             arguments = listOf(navArgument("contactId") { type = NavType.LongType })
         ) { backStackEntry ->
             val contactId = backStackEntry.arguments?.getLong("contactId") ?: return@composable
-            ContactDetailScreen(
+            PantallaDetalleContacto(
                 viewModel = viewModel,
                 contactId = contactId,
                 onBack = { navController.popBackStack() },
@@ -88,12 +102,13 @@ fun ContactAppNavigation(viewModel: ContactViewModel) {
             )
         }
 
+        //Pantalla para registrar o editar contactos
         composable(
             route = "contact_form/{contactId}",
             arguments = listOf(navArgument("contactId") { type = NavType.LongType })
         ) { backStackEntry ->
             val contactId = backStackEntry.arguments?.getLong("contactId") ?: -1L
-            ContactFormScreen(
+            PantallaRegistroContacto(
                 viewModel = viewModel,
                 contactId = if (contactId == -1L) null else contactId,
                 onBack = { navController.popBackStack() }
