@@ -1,0 +1,4 @@
+services:
+  contactos_app:
+    build: .
+    container_name: contactos_app
